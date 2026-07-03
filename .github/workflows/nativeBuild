@@ -1,0 +1,21 @@
+name: Scala CI
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  buildNTest:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+    - uses: sbt/setup-sbt@v1
+    - name: Compile and run Native image
+      run: sbt nativeImage nativeImageRun
