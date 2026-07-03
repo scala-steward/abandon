@@ -5,7 +5,7 @@ on:
     branches: [ master ]
 
 jobs:
-  buildNTest:
+  nativeBuildNTest:
 
     runs-on: ubuntu-latest
 
