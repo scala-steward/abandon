@@ -236,12 +236,19 @@ object CLIApp {
     println(Helper.info(s"Starting web server with start date: ${startDate.formatYYYYMMMDD}"))
     val filterDescription = settings.txnFilters.map(_.description())
 
-    var fullReportBytes = WebAPI.makeReport(startDate, initialAppState, filterDescription)
+    var fullReportBytesActiveOnly = WebAPI.makeReport(startDate, initialAppState, filterDescription, showInactiveAccounts = false)
+    var fullReportBytesAll = WebAPI.makeReport(startDate, initialAppState, filterDescription, showInactiveAccounts = true)
 
     val server = Server.builder()
       .port(9000)
-      .GET("/api/", _ => {
-        val msg = String(fullReportBytes)
+      .GET("/api/", request => {
+        val showInactive = {
+          val queryParams = request.getQueryParams
+          queryParams != null && queryParams.containsKey("showInactiveAccounts") &&
+            queryParams.get("showInactiveAccounts").contains("true")
+        }
+        val bytesToUse = if (showInactive) fullReportBytesAll else fullReportBytesActiveOnly
+        val msg = String(bytesToUse)
         new StringResponse(200, msg, java.util.Map.of("Content-type", java.util.List.of("application/json")))
       })
       .handle(staticHandler)
@@ -253,7 +260,8 @@ object CLIApp {
 
     FileWatcher().watch(initialProcessedFiles, () => {
       val (appState, newProcessedFiles) = processInput(settings)
-      fullReportBytes = WebAPI.makeReport(startDate, appState, filterDescription)
+      fullReportBytesActiveOnly = WebAPI.makeReport(startDate, appState, filterDescription, showInactiveAccounts = false)
+      fullReportBytesAll = WebAPI.makeReport(startDate, appState, filterDescription, showInactiveAccounts = true)
       Some(newProcessedFiles)
     })
 

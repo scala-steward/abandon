@@ -31,7 +31,7 @@ case class AccountBalance(name: AccountName, openingBalance: BigDecimal, closing
 }
 
 object WebAPI {
-  def makeReport(startDate: Date, appState: AppState, filterDescription: Option[String]): Array[Char] = {
+  def makeReport(startDate: Date, appState: AppState, filterDescription: Option[String], showInactiveAccounts: Boolean = false): Array[Char] = {
     // TODO: show filterDescription in output
     val accState = appState.accState
     // TODO: Apply filter from settings, if not already applied
@@ -47,10 +47,10 @@ object WebAPI {
     })
     val cookedPosts = txns.flatMap(_.cookPosts)
 
-    makeReport(startDate, cookedPosts, accTree)
+    makeReport(startDate, cookedPosts, accTree, showInactiveAccounts)
   }
 
-  private def makeReport(startDate: Date, posts: Seq[CookedPost], accTree: AccountTreeState): Array[Char] = {
+  private def makeReport(startDate: Date, posts: Seq[CookedPost], accTree: AccountTreeState, showInactiveAccounts: Boolean): Array[Char] = {
     val (currPosts, prevPosts) = posts.partition(_.date.toInt >= startDate.toInt)
     val allAccountNames = posts.map(_.name).toSet
     val sortedAllAccountNames = allAccountNames.toSeq.sorted
@@ -74,15 +74,34 @@ object WebAPI {
       AccountDetails(AccountName(fullPath), openingBalance, closingBalance, debitSubTotal, creditSubTotal, gPosts)
     }
 
-    def mkBalanceReport(node: AccountTreeState): AccountBalance = {
+    // Determine active accounts: An account is active if it has transactions in the period,
+    // or has a non-zero opening balance.
+    val directlyActiveAccounts = sortedAllAccountNames.filter { name =>
+      val details = getDetails(name)
+      details.openingBalance != Zero || details.posts.nonEmpty
+    }.toSet
+
+    // An account is also active if any of its descendants are directly active.
+    def isActive(name: String): Boolean = {
+      name.isEmpty || directlyActiveAccounts.exists(acc => acc == name || acc.startsWith(name + ":"))
+    }
+
+    def mkBalanceReport(node: AccountTreeState): Option[AccountBalance] = {
       val name = node.name
-      val details = getDetails(name.fullPathStr)
-      val childBalances = node.childStates.map(mkBalanceReport).toArray
-      val totalOpening = details.openingBalance + childBalances.map(_.openingBalance).sum
-      val totalClosing = details.closingBalance + childBalances.map(_.closingBalance).sum
-      val totalDebits = details.debitSubTotal + childBalances.map(_.debitSubTotal).sum
-      val totalCredits = details.creditSubTotal + childBalances.map(_.creditSubTotal).sum
-      AccountBalance(name, totalOpening, totalClosing, totalDebits, totalCredits, childBalances)
+      val nameStr = name.fullPathStr
+      val isNodeActive = isActive(nameStr)
+
+      if (!showInactiveAccounts && nameStr.nonEmpty && !isNodeActive) {
+        None
+      } else {
+        val details = getDetails(nameStr)
+        val childBalances = node.childStates.flatMap(mkBalanceReport).toArray
+        val totalOpening = details.openingBalance + childBalances.map(_.openingBalance).sum
+        val totalClosing = details.closingBalance + childBalances.map(_.closingBalance).sum
+        val totalDebits = details.debitSubTotal + childBalances.map(_.debitSubTotal).sum
+        val totalCredits = details.creditSubTotal + childBalances.map(_.creditSubTotal).sum
+        Some(AccountBalance(name, totalOpening, totalClosing, totalDebits, totalCredits, childBalances))
+      }
     }
 
     var accTxnsReport = Map[String, Any]()
@@ -147,11 +166,11 @@ object WebAPI {
     }
 
     def updateAccTxnReport(node: AccountTreeState): Unit = {
-      val name = node.name.fullPathStr
-      if (name.nonEmpty) {
+      val nameStr = node.name.fullPathStr
+      if (nameStr.nonEmpty && (showInactiveAccounts || isActive(nameStr))) {
         accTxnsReport ++= Map(
-          name -> Map(
-            "name" -> name,
+          nameStr -> Map(
+            "name" -> nameStr,
             "txnsByMonth" -> getDetailsByMonth(node.name)
           )
         )
@@ -159,7 +178,11 @@ object WebAPI {
       node.childStates.foreach(updateAccTxnReport)
     }
 
-    val balReport = if (accTree.name.fullPathStr.isEmpty) accTree.childStates.map(mkBalanceReport(_).toMap).toArray else mkBalanceReport(accTree).toMap
+    val balReport = if (accTree.name.fullPathStr.isEmpty) {
+      accTree.childStates.flatMap(mkBalanceReport).map(_.toMap).toArray
+    } else {
+      mkBalanceReport(accTree).map(_.toMap).getOrElse(Map[String, Any]())
+    }
 
     updateAccTxnReport(accTree)
 
@@ -175,7 +198,7 @@ object WebAPI {
         val debitSubTotal = sumDeltas(debitPosts)
         val creditSubTotal = sumDeltas(creditPosts)
 
-        val accountSummaries = currMonthPosts.groupBy(_.name).toArray.sortBy(_._1).map((name, posts) =>
+        val accountSummariesRaw = currMonthPosts.groupBy(_.name).toArray.sortBy(_._1).map((name, posts) =>
           val priorPosts = currPosts.filter(p => p.date.toIntYYYYMM < mDate.toIntYYYYMM && p.name == name)
           val accOpeningBalance = openingBalances.getOrElse(name, Zero) + sumDeltas(priorPosts)
           val (accDebitPosts, accCreditPosts) = posts.partition(_.delta < Zero)
@@ -190,14 +213,13 @@ object WebAPI {
             "closing" -> accClosingBalance,
           )
         )
-
         Map(
             "month" -> s"${Helper.getShortMonth(mDate.month)} ${mDate.year}",
             "opening" -> Zero,
             "closing" -> closingBalance,
             "debit" -> debitSubTotal,
             "credit" -> creditSubTotal,
-            "accountSummaries" -> accountSummaries
+            "accountSummaries" -> accountSummariesRaw
           )
         )
     }
