@@ -4,8 +4,44 @@
   import type { Application } from "$lib/model/Application";
   import { TabType, BalanceTabInfo, type TabInfo, AccountTabInfo, MonthlyRegisterTabInfo } from '$lib/model/Tabs';
   import MonthlyRegisterView from './MonthlyRegisterView.svelte';
+  import { selectedAmounts } from '$lib/stores';
 
   export let application: Application
+
+  let statsError = false;
+  let sum = 0;
+  let avg = 0;
+  let min = 0;
+  let max = 0;
+  let count = 0;
+
+  $: {
+    if ($selectedAmounts.length > 0) {
+      statsError = false;
+      let values = [];
+      for (const sa of $selectedAmounts) {
+        // Remove commas before parsing
+        const val = parseFloat(sa.amount.replace(/,/g, ''));
+        if (isNaN(val)) {
+          statsError = true;
+          break;
+        }
+        values.push(val);
+      }
+
+      if (!statsError && values.length > 0) {
+        count = values.length;
+        sum = values.reduce((a, b) => a + b, 0);
+        avg = sum / count;
+        min = Math.min(...values);
+        max = Math.max(...values);
+      }
+    }
+  }
+
+  function clearSelection() {
+    $selectedAmounts = [];
+  }
 
   let tabs: TabInfo[] = [
     new BalanceTabInfo(),
@@ -30,18 +66,35 @@
 </script>
 
 <div>
-  <ul>
-    {#each tabs as tab, index}
-    <li class:selected={index == currentTabIndex}>
-      <div>
-      <span on:click={() => currentTabIndex = index}>{tab.getTitle()}</span>
-      {#if tab.closeable}
-        <span class="closeButton" on:click={() => closeTab(index)}>X</span>
-      {/if}
+  <div class="header">
+    <ul>
+      {#each tabs as tab, index}
+      <li class:selected={index == currentTabIndex}>
+        <div>
+        <span on:click={() => currentTabIndex = index}>{tab.getTitle()}</span>
+        {#if tab.closeable}
+          <span class="closeButton" on:click={() => closeTab(index)}>X</span>
+        {/if}
+        </div>
+      </li>
+      {/each}
+    </ul>
+
+    {#if $selectedAmounts.length > 0}
+      <div class="stats">
+        {#if statsError}
+          <span class="error">Error parsing amounts</span>
+        {:else}
+          <span>[{count}]</span>
+          <span>Sum: {sum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          <span>Avg: {avg.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          <span>Min: {min.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          <span>Max: {max.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        {/if}
+        <button on:click={clearSelection} title="Deselect all">X</button>
       </div>
-    </li>
-    {/each}
-  </ul>
+    {/if}
+  </div>
 
   <div class="contents">
     {#if currentTab.tabType == TabType.Balance}
@@ -58,16 +111,47 @@
 </div>
 
 <style>
-  ul {
-    display: flex;
-    flex-wrap: wrap;
-    padding: 0;
-
-    position:sticky;
+  .header {
+    position: sticky;
     top: 0px;
     background-color: #0007;
     backdrop-filter: blur(.3em);
     z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .stats {
+    display: flex;
+    gap: 1em;
+    padding: 0.5em 1em;
+    background-color: #222;
+    border: 1px solid #444;
+    border-radius: 4px;
+    margin-right: 1em;
+    color: #eee;
+    font-family: monospace;
+    align-items: center;
+  }
+  .stats .error {
+    color: #ff5555;
+  }
+  .stats button {
+    background: #444;
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-size: 0.9em;
+  }
+  .stats button:hover {
+    background: #666;
+  }
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0;
     margin: 0;
   }
   li {
