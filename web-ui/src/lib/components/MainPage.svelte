@@ -13,6 +13,7 @@
   let avg = 0;
   let min = 0;
   let max = 0;
+  let count = 0;
 
   $: {
     if ($selectedAmounts.length > 0) {
@@ -29,8 +30,9 @@
       }
 
       if (!statsError && values.length > 0) {
+        count = values.length;
         sum = values.reduce((a, b) => a + b, 0);
-        avg = sum / values.length;
+        avg = sum / count;
         min = Math.min(...values);
         max = Math.max(...values);
       }
@@ -83,6 +85,7 @@
         {#if statsError}
           <span class="error">Error parsing amounts</span>
         {:else}
+          <span>[{count}]</span>
           <span>Sum: {sum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           <span>Avg: {avg.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           <span>Min: {min.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
