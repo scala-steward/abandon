@@ -198,7 +198,7 @@ object WebAPI {
         val debitSubTotal = sumDeltas(debitPosts)
         val creditSubTotal = sumDeltas(creditPosts)
 
-        val accountSummariesRaw = currMonthPosts.groupBy(_.name).toArray.sortBy(_._1).map((name, posts) =>
+        val accountSummaries = currMonthPosts.groupBy(_.name).toArray.sortBy(_._1).map((name, posts) =>
           val priorPosts = currPosts.filter(p => p.date.toIntYYYYMM < mDate.toIntYYYYMM && p.name == name)
           val accOpeningBalance = openingBalances.getOrElse(name, Zero) + sumDeltas(priorPosts)
           val (accDebitPosts, accCreditPosts) = posts.partition(_.delta < Zero)
@@ -219,7 +219,7 @@ object WebAPI {
             "closing" -> closingBalance,
             "debit" -> debitSubTotal,
             "credit" -> creditSubTotal,
-            "accountSummaries" -> accountSummariesRaw
+            "accountSummaries" -> accountSummaries
           )
         )
     }
