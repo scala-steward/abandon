@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
+		<meta name="viewport" content="width=device-width" />
+		%sveltekit.head%
+
+		<style>
+			body, button {
+				background-color: #222;
+				color: #eee;
+				padding: 0;
+				margin: 0;
+			}
+			a {
+				color: rgb(161, 191, 255);
+			}
+			button {
+				border: 2px solid #333;
+			}
+			table {
+				width: 100%;
+				border-collapse: collapse;
+				font-family: monospace;
+			}
+		</style>
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>
