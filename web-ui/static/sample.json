@@ -1,0 +1,44 @@
+{
+  "accountBalances": [
+    {
+      "name": "Assets",
+      "opening": "0.00",
+      "debit": "100.00",
+      "credit": "0.00",
+      "closing": "100.00",
+      "hasChildren": true,
+      "children": [
+        {
+          "name": "Cash",
+          "opening": "0.00",
+          "debit": "100.00",
+          "credit": "0.00",
+          "closing": "100.00",
+          "hasChildren": false,
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "Expenses",
+      "opening": "0.00",
+      "debit": "50.00",
+      "credit": "0.00",
+      "closing": "50.00",
+      "hasChildren": true,
+      "children": [
+        {
+          "name": "Food",
+          "opening": "0.00",
+          "debit": "50.00",
+          "credit": "0.00",
+          "closing": "50.00",
+          "hasChildren": false,
+          "children": []
+        }
+      ]
+    }
+  ],
+  "accountTxns": {},
+  "monthlySummaries": []
+}
