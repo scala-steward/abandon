@@ -19,7 +19,7 @@ class FileWatcher(pollDelay: Long = 1000, triggerDelay: Long = 500) {
     runCheckTask
   }
 
-  private var onChange: () => Option[Set[String]] = _
+  private var onChange: () => Option[Set[String]] = scala.compiletime.uninitialized
 
   def stopWatch = {
     timer.cancel()
@@ -37,7 +37,7 @@ class FileWatcher(pollDelay: Long = 1000, triggerDelay: Long = 500) {
     paths.foreach { path =>
       val properties = getProperties(path)
       propertyCache.get(path) match {
-        case Some(oldProperties) if (oldProperties equals properties) =>
+        case Some(oldProperties) if (oldProperties `equals` properties) =>
         case _ =>
           propertyCache += (path -> properties)
           change = true

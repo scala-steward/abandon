@@ -12,7 +12,7 @@ import scala.util.control.NonFatal
   * @param maxDepth
   */
 abstract class FileMonitor(val root: File, maxDepth: Int) extends File.Monitor {
-  protected[this] val service = root.newWatchService
+  protected val service = root.newWatchService
 
   def this(root: File, recursive: Boolean = true) = this(root, if (recursive) Int.MaxValue else 0)
 
@@ -20,9 +20,9 @@ abstract class FileMonitor(val root: File, maxDepth: Int) extends File.Monitor {
     * @param target
     * @return
     */
-  protected[this] def reactTo(target: File) = root.isDirectory || root.isSamePathAs(target)
+  protected def reactTo(target: File) = root.isDirectory || root.isSamePathAs(target)
 
-  protected[this] def process(key: WatchKey) = {
+  protected def process(key: WatchKey) = {
     val path = key.watchable().asInstanceOf[Path]
 
     import scala.collection.JavaConverters._
@@ -41,7 +41,7 @@ abstract class FileMonitor(val root: File, maxDepth: Int) extends File.Monitor {
     key.reset()
   }
 
-  protected[this] def watch(file: File, depth: Int): Unit = {
+  protected def watch(file: File, depth: Int): Unit = {
     def toWatch: Iterator[File] =
       if (file.isDirectory) {
         file.walk(depth).filter(f => f.isDirectory && f.exists)
@@ -68,6 +68,6 @@ abstract class FileMonitor(val root: File, maxDepth: Int) extends File.Monitor {
   override def onCreate(file: File, count: Int) = {}
   override def onModify(file: File, count: Int) = {}
   override def onDelete(file: File, count: Int) = {}
-  override def onUnknownEvent(event: WatchEvent[_]) = {}
+  override def onUnknownEvent(event: WatchEvent[?]) = {}
   override def onException(exception: Throwable) = {}
 }

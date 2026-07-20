@@ -164,7 +164,7 @@ object Reports {
 
         val totalDeltasPerAccount = matchingAmounts.map {
           case (accountName, amount) =>
-            val myPostings = txnGroup.flatMap(_.children).filter(_.name equals accountName)
+            val myPostings = txnGroup.flatMap(_.children).filter(_.name `equals` accountName)
             val render = "%-50s %20.2f %20.2f" format (accountName, sumDeltas(myPostings), amount)
             RegisterReportEntry(accountName.toString, myPostings, render)
         }
@@ -192,7 +192,7 @@ object Reports {
 
         val totalDeltasPerAccount = matchingAmounts.map {
           case (accountName, amount) =>
-            val myTxns = monthlyGroup.flatMap(_.children).filter(_.name equals accountName)
+            val myTxns = monthlyGroup.flatMap(_.children).filter(_.name `equals` accountName)
             val render = "%-50s %20.2f %20.2f" format (accountName, myTxns.foldLeft(Zero)(_ + _.delta), amount)
             RegisterReportEntry(accountName.toString, myTxns, render)
         }
@@ -210,7 +210,7 @@ object Reports {
   private def checkSourceNames(closures: Seq[ClosureExportSettings], accountNames: Seq[String]) = {
     var uniqueNames = Set[String]()
     closures foreach { closure =>
-      val srcEntries = accountNames.filter { name => closure.sources.exists(name matches _) }
+      val srcEntries = accountNames.filter { name => closure.sources.exists(name `matches` _) }
       srcEntries foreach { srcName =>
         if (uniqueNames.contains(srcName)) {
           throw new InputError("Found duplicate source entry in closures: " + srcName)
@@ -260,7 +260,7 @@ object Reports {
 
   def mkClosure(accumulator: ClosureAccumulator, latestDate: Date, closure: ClosureExportSettings): ClosureAccumulator = {
     val amounts = accumulator.amounts
-    val (srcEntries, otherEntries) = amounts.partition { name => closure.sources.exists(name._1.fullPathStr matches _) }
+    val (srcEntries, otherEntries) = amounts.partition { name => closure.sources.exists(name._1.fullPathStr `matches` _) }
     val destEntry =
       amounts.find { case (name, amount) => name.fullPathStr == closure.destination } match {
         case Some(entry) => entry

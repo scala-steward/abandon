@@ -237,7 +237,7 @@ object WebAPI {
 
   private def serializeJSON(any: Any): Array[Char] = {
     any match {
-      case map: Map[String, Any] =>
+      case map: Map[?, ?] =>
         val sb = StringBuilder(1024)
         val keys = map.keys.toList
         val maxIndex = keys.size - 1

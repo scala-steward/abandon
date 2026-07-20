@@ -263,7 +263,7 @@ trait DirSuiteLike extends AnyFunSuiteLike {
     val basename = File(testname).nameWithoutExtension(true)
 
     File(testdir)
-      .glob(basename + ".ref.*")(visitOptions = File.VisitOptions.follow)
+      .glob(basename + ".ref.*")(using visitOptions = File.VisitOptions.follow)
       .map(f => f.path)
       .toSeq
       .sorted

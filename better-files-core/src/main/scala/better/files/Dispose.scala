@@ -59,7 +59,7 @@ class Dispose[A](private[Dispose] val resource: A)(implicit disposer: Disposable
   }
 
   private[Dispose] def withAdditionalDisposeTask[U](f: => U): Dispose[A] =
-    new Dispose[A](resource)(Disposable {
+    new Dispose[A](resource)(using Disposable {
       try {
         disposeOnce()
       } finally {
@@ -94,7 +94,7 @@ class Dispose[A](private[Dispose] val resource: A)(implicit disposer: Disposable
   /** This will apply f on the resource while it is open
     */
   def map[B](f: A => B): Dispose[B] =
-    new Dispose[B](f(resource))(Disposable(disposeOnce()))
+    new Dispose[B](f(resource))(using Disposable(disposeOnce()))
 
   def withFilter(f: A => Boolean): this.type = {
     if (!f(resource)) disposeOnce()

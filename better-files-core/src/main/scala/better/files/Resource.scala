@@ -54,7 +54,7 @@ trait Resource {
   )(implicit
       charset: Charset = DefaultCharset
   ): Option[String] =
-    asStream(name).map(_.asString(bufferSize = bufferSize)(charset))
+    asStream(name).map(_.asString(bufferSize = bufferSize)(using charset))
 
   def getAsString(
       name: String,
@@ -62,7 +62,7 @@ trait Resource {
   )(implicit
       charset: Charset = DefaultCharset
   ): String =
-    asString(name, bufferSize)(charset).getOrElse(Resource.notFound(name))
+    asString(name, bufferSize)(using charset).getOrElse(Resource.notFound(name))
 
   /** Look up a resource by name, and get its [[https://docs.oracle.com/javase/10/docs/api/java/net/URL.html URL]].
     *

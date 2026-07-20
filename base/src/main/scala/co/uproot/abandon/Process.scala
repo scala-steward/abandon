@@ -214,7 +214,7 @@ object Processor {
         case None => { true }
       }
     }
-    val sortedTxns = transactions.sortBy(_.txn.date)(DateOrdering)
+    val sortedTxns = transactions.sortBy(_.txn.date)(using DateOrdering)
     val accState = new AccountState()
     val aliasMap = accountSettings.collect{ case AccountSettings(name, Some(alias)) => alias -> name }.toMap
 
@@ -246,8 +246,8 @@ object Processor {
         txTotal += delta
         detailedPosts :+= DetailedPost(transformAlias(p.accName), delta, p.commentOpt)
       }
-      if (!(txTotal equals Zero)) {
-        txScope.definitions.find { d => d.name equals "defaultAccount" } match {
+      if (!(txTotal `equals` Zero)) {
+        txScope.definitions.find { d => d.name `equals` "defaultAccount" } match {
           case Some(defaultAccountDef) => {
             val defaultAccount = evaluationContext.evaluateString(FunctionExpr("defaultAccount", Nil, Some(tx.pos)))
             val fullDefaultAccount = transformAlias(AccountName(defaultAccount.split(":").toSeq))
@@ -258,7 +258,7 @@ object Processor {
           case None =>
         }
       }
-      if (!(txTotal equals Zero)) {
+      if (!(txTotal `equals` Zero)) {
         throw new ConstraintPosError(s"Transaction does not balance. Unbalanced amount: $txTotal", tx.pos)
       }
       accState.updateAmounts(new PostGroup(detailedPosts, tx, tx.date, tx.annotationOpt, tx.payeeOpt, tx.comments))
