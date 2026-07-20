@@ -80,6 +80,6 @@ final class ReportWriter(settings: Settings, outFiles: Seq[String]) {
     fileWriters foreach { fileWriter =>
       fileWriter.close()
     }
-    Console.flush
+    Console.flush()
   }
 }

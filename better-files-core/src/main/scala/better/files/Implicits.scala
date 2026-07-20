@@ -25,8 +25,8 @@ trait Implicits extends Dispose.FlatMap.Implicits with Scanner.Read.Implicits wi
     def file(args: Any*): File =
       value(args).toFile
 
-    private[this] def value(args: Seq[Any]) =
-      sc.s(args: _*)
+    private def value(args: Seq[Any]) =
+      sc.s(args*)
   }
 
   implicit class StringExtensions(str: String) {
@@ -168,7 +168,7 @@ trait Implicits extends Dispose.FlatMap.Implicits with Scanner.Read.Implicits wi
         bufferSize: Int = DefaultBufferSize
     ): ObjectInputStream =
       new ObjectInputStream(if (bufferSize <= 0) in else buffered(bufferSize)) {
-        override protected def resolveClass(objectStreamClass: ObjectStreamClass): Class[_] =
+        override protected def resolveClass(objectStreamClass: ObjectStreamClass): Class[?] =
           try {
             Class.forName(objectStreamClass.getName, false, classLoader)
           } catch {
@@ -180,7 +180,7 @@ trait Implicits extends Dispose.FlatMap.Implicits with Scanner.Read.Implicits wi
       new InputStreamReader(in, charset)
 
     def lines(implicit charset: Charset = DefaultCharset): Iterator[String] =
-      reader(charset).buffered.lines().toAutoClosedIterator
+      reader(using charset).buffered.lines().toAutoClosedIterator
 
     def bytes: Iterator[Byte] =
       in.autoClosed.flatMap(res => eofReader(res.read()).map(_.toByte))
@@ -270,7 +270,7 @@ trait Implicits extends Dispose.FlatMap.Implicits with Scanner.Read.Implicits wi
   }
 
   implicit class PrintWriterExtensions(pw: PrintWriter) {
-    def printLines(lines: TraversableOnce[_]): PrintWriter = {
+    def printLines(lines: TraversableOnce[?]): PrintWriter = {
       lines.foreach(pw.println)
       pw
     }
@@ -281,7 +281,7 @@ trait Implicits extends Dispose.FlatMap.Implicits with Scanner.Read.Implicits wi
       new BufferedReader(reader)
 
     def toInputStream(implicit charset: Charset = DefaultCharset): InputStream =
-      new ReaderInputStream(reader)(charset)
+      new ReaderInputStream(reader)(using charset)
 
     def chars: Iterator[Char] =
       new Dispose(reader).flatMap(res => eofReader(res.read()).map(_.toChar))
@@ -297,7 +297,7 @@ trait Implicits extends Dispose.FlatMap.Implicits with Scanner.Read.Implicits wi
       new BufferedWriter(writer)
 
     def outputstream(implicit charset: Charset = DefaultCharset): OutputStream =
-      new WriterOutputStream(writer)(charset)
+      new WriterOutputStream(writer)(using charset)
   }
 
   implicit class FileChannelExtensions(fc: FileChannel) {
@@ -307,7 +307,7 @@ trait Implicits extends Dispose.FlatMap.Implicits with Scanner.Read.Implicits wi
 
   implicit class PathMatcherExtensions(matcher: PathMatcher) {
     def matches(file: File, maxDepth: Int)(implicit visitOptions: File.VisitOptions = File.VisitOptions.default) =
-      file.collectChildren(child => matcher.matches(child.path), maxDepth)(visitOptions)
+      file.collectChildren(child => matcher.matches(child.path), maxDepth)(using visitOptions)
   }
 
   implicit class ObjectInputStreamExtensions(ois: ObjectInputStream) {
@@ -359,7 +359,7 @@ trait Implicits extends Dispose.FlatMap.Implicits with Scanner.Read.Implicits wi
       */
     def mapEntries[A](f: ZipEntry => A): Iterator[A] =
       new Iterator[A] {
-        private[this] var entry = in.getNextEntry
+        private var entry = in.getNextEntry
 
         override def hasNext = entry != null
 
@@ -430,7 +430,7 @@ trait Implicits extends Dispose.FlatMap.Implicits with Scanner.Read.Implicits wi
 
   private[files] implicit class OrderingExtensions[A](order: Ordering[A]) {
     def andThenBy(order2: Ordering[A]): Ordering[A] =
-      Ordering.comparatorToOrdering(order.thenComparing(order2))
+      Ordering.comparatorToOrdering(using order.thenComparing(order2))
   }
 
   implicit def stringToMessageDigest(algorithmName: String): MessageDigest =

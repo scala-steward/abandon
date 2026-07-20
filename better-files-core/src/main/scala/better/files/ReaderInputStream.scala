@@ -21,17 +21,17 @@ class ReaderInputStream(reader: Reader, encoder: CharsetEncoder, bufferSize: Int
   /** CharBuffer used as input for the decoder. It should be reasonably
     * large as we read data from the underlying Reader into this buffer.
     */
-  private[this] val encoderIn = CharBuffer.allocate(bufferSize).flip().asInstanceOf[CharBuffer]
+  private val encoderIn = CharBuffer.allocate(bufferSize).flip().asInstanceOf[CharBuffer]
 
   /** ByteBuffer used as output for the decoder. This buffer can be small
     * as it is only used to transfer data from the decoder to the buffer provided by the caller.
     */
-  private[this] val encoderOut = ByteBuffer.allocate(bufferSize >> 4).flip().asInstanceOf[ByteBuffer]
+  private val encoderOut = ByteBuffer.allocate(bufferSize >> 4).flip().asInstanceOf[ByteBuffer]
 
-  private[this] var lastCoderResult = CoderResult.UNDERFLOW
-  private[this] var endOfInput      = false
+  private var lastCoderResult = CoderResult.UNDERFLOW
+  private var endOfInput      = false
 
-  private[this] def fillBuffer() = {
+  private def fillBuffer() = {
     assert(!endOfInput)
     if (lastCoderResult.isUnderflow) {
       val position = encoderIn.compact().position()

@@ -37,10 +37,10 @@ object Dsl {
       f(file)
 
     def <<(line: String)(implicit charset: Charset = DefaultCharset): file.type =
-      file.appendLines(line)(charset)
+      file.appendLines(line)(using charset)
 
     def >>:(line: String)(implicit charset: Charset = DefaultCharset): file.type =
-      file.appendLines(line)(charset)
+      file.appendLines(line)(using charset)
 
     def <(
         text: String
@@ -48,7 +48,7 @@ object Dsl {
         openOptions: File.OpenOptions = File.OpenOptions.default,
         charset: Charset = DefaultCharset
     ): file.type =
-      file.write(text)(openOptions, charset)
+      file.write(text)(using openOptions, charset)
 
     def `>:`(
         text: String
@@ -56,10 +56,10 @@ object Dsl {
         openOptions: File.OpenOptions = File.OpenOptions.default,
         charset: Charset = DefaultCharset
     ): file.type =
-      file.write(text)(openOptions, charset)
+      file.write(text)(using openOptions, charset)
 
     def `!`(implicit charset: Charset = DefaultCharset): String =
-      file.contentAsString(charset)
+      file.contentAsString(using charset)
 
     def `===`(that: File): Boolean =
       file.isSameContentAs(that)
@@ -80,7 +80,7 @@ object Dsl {
     if (to.isDirectory) {
       from.moveToDirectory(to)
     } else {
-      from.moveTo(to)(File.CopyOptions(overwrite = true))
+      from.moveTo(to)(using File.CopyOptions(overwrite = true))
     }
   }
 
@@ -154,14 +154,14 @@ object Dsl {
     file.posixAttributes
 
   def unzip(zipFile: File)(destination: File)(implicit charset: Charset = DefaultCharset): destination.type =
-    zipFile.unzipTo(destination)(charset)
+    zipFile.unzipTo(destination)(using charset)
 
   def zip(
       files: File*
   )(destination: File, compressionLevel: Int = Deflater.DEFAULT_COMPRESSION)(implicit
       charset: Charset = DefaultCharset
   ): destination.type =
-    destination.zipIn(files.iterator, compressionLevel)(charset)
+    destination.zipIn(files.iterator, compressionLevel)(using charset)
 
   def ungzip(gzipFile: File)(destination: File): File =
     gzipFile.unGzipTo(destination)

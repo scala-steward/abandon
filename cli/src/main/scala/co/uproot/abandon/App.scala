@@ -123,7 +123,7 @@ object CLIApp {
             case Some(parent) => {
               reportWriter.println(("%20.2f %20.2f        %s") format(txn.resultAmount, txn.delta, parent.dateLineStr))
               // println(txnIndent + parent.dateLineStr)
-              val otherTxns = parent.children.filterNot(_.name equals txn.name)
+              val otherTxns = parent.children.filterNot(_.name `equals` txn.name)
               parent.groupComments.foreach { groupComment =>
                 reportWriter.println(txnIndent + "  ; " + groupComment)
               }

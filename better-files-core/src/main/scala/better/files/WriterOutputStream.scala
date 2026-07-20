@@ -13,12 +13,12 @@ class WriterOutputStream(writer: Writer, decoder: CharsetDecoder, bufferSize: In
 
   /** CharBuffer used as output for the decoder
     */
-  private[this] val decoderOut = CharBuffer.allocate(bufferSize)
+  private val decoderOut = CharBuffer.allocate(bufferSize)
 
   /** ByteBuffer used as output for the decoder. This buffer can be small
     * as it is only used to transfer data from the decoder to the buffer provided by the caller.
     */
-  private[this] val decoderIn = ByteBuffer.allocate(bufferSize >> 4)
+  private val decoderIn = ByteBuffer.allocate(bufferSize >> 4)
 
   def this(
       writer: Writer,
@@ -62,7 +62,7 @@ class WriterOutputStream(writer: Writer, decoder: CharsetDecoder, bufferSize: In
     writer.close()
   }
 
-  private[this] def processInput(endOfInput: Boolean) = {
+  private def processInput(endOfInput: Boolean) = {
     decoderIn.flip()
     @tailrec def loop(): Unit = {
       val coderResult = decoder.decode(decoderIn, decoderOut, endOfInput)
@@ -77,7 +77,7 @@ class WriterOutputStream(writer: Writer, decoder: CharsetDecoder, bufferSize: In
     decoderIn.compact()
   }
 
-  private[this] def flushOutput(): Unit = {
+  private def flushOutput(): Unit = {
     val p = decoderOut.position()
     if (p > 0) {
       writer.write(decoderOut.array, 0, p)

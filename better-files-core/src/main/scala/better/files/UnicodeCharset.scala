@@ -28,10 +28,10 @@ class UnicodeCharset(underlyingCharset: Charset, writeByteOrderMarkers: Boolean)
 class UnicodeDecoder(defaultCharset: Charset) extends CharsetDecoder(defaultCharset, 1, 1) {
   import UnicodeCharset.bomTable
 
-  private[this] var inferredCharset: Option[Charset] = None
+  private var inferredCharset: Option[Charset] = None
 
   @annotation.tailrec
-  private[this] def decode(
+  private def decode(
       in: ByteBuffer,
       out: CharBuffer,
       candidates: Set[Charset] = Set.empty,
@@ -75,10 +75,10 @@ class UnicodeDecoder(defaultCharset: Charset) extends CharsetDecoder(defaultChar
   * @param charset
   */
 class BomEncoder(charset: Charset) extends CharsetEncoder(charset, 1, 1) {
-  private[this] val bom = UnicodeCharset.bomTable
+  private val bom = UnicodeCharset.bomTable
     .getOrElse(charset, throw new IllegalArgumentException(s"$charset does not support BOMs"))
     .toArray
-  private[this] var isBomWritten = false
+  private var isBomWritten = false
 
   override def encodeLoop(in: CharBuffer, out: ByteBuffer): CoderResult = {
     if (!isBomWritten) {

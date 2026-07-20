@@ -43,14 +43,14 @@ object Scanner {
       implicit val stringSource: Source[String] = readerSource.contramap(new StringReader(_))
 
       implicit def inputstreamSource(implicit charset: Charset = DefaultCharset): Source[InputStream] =
-        readerSource.contramap(_.reader(charset))
+        readerSource.contramap(_.reader(using charset))
     }
   }
 
   def apply[A: Source](a: A, splitter: StringSplitter = StringSplitter.Default): Scanner =
     new Scanner {
-      private[this] val reader  = implicitly[Source[A]].apply(a)
-      private[this] val tokens  = reader.tokens(splitter)
+      private val reader  = implicitly[Source[A]].apply(a)
+      private val tokens  = reader.tokens(splitter)
       override def lineNumber() = reader.getLineNumber
       override def nextLine()   = Option(reader.readLine()).getOrElse(throw new NoSuchElementException("End of file"))
       override def next()       = tokens.next()
@@ -153,12 +153,12 @@ object StringSplitter {
     new StringSplitter {
       override def split(s: String) =
         new Iterator[String] {
-          private[this] var i = 0
-          private[this] var j = -1
-          private[this] val c = delimiter.toInt
+          private var i = 0
+          private var j = -1
+          private val c = delimiter.toInt
           _next()
 
-          private[this] def _next() = {
+          private def _next() = {
             i = j + 1
             val k = s.indexOf(c, i)
             j = if (k < 0) s.length else k
